@@ -1,17 +1,23 @@
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class CellsSimulation extends JFrame{
 
-    JTextField numberOfCells;
-    JTextField numberOfStep;
-    JTextField dose;
+    JSlider numberOfCells;
+    JSlider numberOfStep;
+    JSlider dose;
     JButton saveImg;
     JButton saveText;
     JButton buttonOnOff;
     JMenuBar menuBar;
     JMenu menu;
     JMenuItem parameterSelection;
+    private PaintPanel paintPanel;
+    private Simulation simulation;
+    private Cell[][][] organism;
+    int n; //ustawic
 
     public CellsSimulation() {
         setTitle("Cells simulation");
@@ -20,9 +26,13 @@ public class CellsSimulation extends JFrame{
         setLayout(new BorderLayout());
 
         //left Panel - cells
-        JPanel cellsPanel = new JPanel();
-        cellsPanel.setBorder(BorderFactory.createLineBorder(Color.black));
-        add(cellsPanel, BorderLayout.WEST);
+        simulation = new Simulation();
+        simulation.inicializeOrganism();
+        simulation.setWall();
+        organism = new Cell[n][n][n];
+        paintPanel = new PaintPanel(simulation.organism, simulation.n);
+        paintPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+        add(paintPanel, BorderLayout.WEST);
 
         //right Panel - parameters
         JPanel rightPanel = new JPanel();
@@ -30,14 +40,41 @@ public class CellsSimulation extends JFrame{
         rightPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
         JLabel parametersLabel = new JLabel("Parameters : ");
-        numberOfCells = new JTextField(10);
+        numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        numberOfCells.setMajorTickSpacing(5); //glowna podzialka
+        numberOfCells.setMinorTickSpacing(1); //najmniejszy odstep
+        numberOfCells.setPaintTicks(true);  //rysuje podzialke
+        numberOfCells.setPaintLabels(true);  //pisze numerki
+        numberOfCells.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                simulation.setN(numberOfCells.getValue());
+            }
+        });
         numberOfCells.setBorder(BorderFactory.createTitledBorder("Number of Cells"));
 
-        numberOfStep = new JTextField("");
+        numberOfStep = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        numberOfStep.setMajorTickSpacing(5);
+        numberOfStep.setMinorTickSpacing(1);
+        numberOfStep.setPaintTicks(true);
+        numberOfStep.setPaintLabels(true);
         numberOfStep.setBorder(BorderFactory.createTitledBorder("Number of Steps"));
+        numberOfStep.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                simulation.setK(numberOfStep.getValue());
+            }
+        });
 
-        dose = new JTextField(10);
+        dose = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        dose.setMajorTickSpacing(5);
+        dose.setMinorTickSpacing(1);
+        dose.setPaintTicks(true);
+        dose.setPaintLabels(true);
         dose.setBorder(BorderFactory.createTitledBorder("Dose"));
+        dose.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                simulation.setD(dose.getValue());
+            }
+        });
 
         JPanel parametersPanel = new JPanel();
         parametersPanel.setLayout(new GridLayout(3,1,5,5));
@@ -56,6 +93,7 @@ public class CellsSimulation extends JFrame{
 
         JPanel startPanel = new JPanel();
         buttonOnOff = new JButton("ON/OFF");
+        buttonOnOff.addActionListener(e -> startSimulation());
         startPanel.add(buttonOnOff);
 
         rightPanel.add(parametersLabel);
@@ -74,6 +112,23 @@ public class CellsSimulation extends JFrame{
         menuBar.add(menu);
         setJMenuBar(menuBar);
 
+    }
+
+    private void startSimulation() {
+        new Thread(() ->{
+           simulation.inicializeOrganism();
+           simulation.setWall();
+
+            for (int step = 0; step < simulation.k; step++) {
+                simulation.simulation();
+                paintPanel.updateOrganism(simulation.organism);
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private static void openParameterSelection(JFrame parent) {   //passes references to the head window
@@ -320,8 +375,10 @@ public class CellsSimulation extends JFrame{
         return otherPanel;
     }
 
+
+
     public static void main(String[] args) {
-        CellsSimulation simulation = new CellsSimulation();
-        simulation.setVisible(true);
+        CellsSimulation cells = new CellsSimulation();
+        cells.setVisible(true);
     }
 }
