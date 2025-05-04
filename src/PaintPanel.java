@@ -6,35 +6,40 @@ public class PaintPanel extends JPanel {
     private Cell[][][] organism;
     private int n;
 
-    public PaintPanel(Cell[][][] organism, int n) {
+    public PaintPanel(Cell[][][] organism, int newN) {
         this.organism = organism;
-        this.n = n;
+        this.n = newN;
+        repaint();
     }
 
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
+        //smooths the edges
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int cellSize = getWidth() / n;
+        int panelSize = Math.min(getWidth(), getHeight());
+        int cellSpacing = panelSize / (n+12) ; //  to leave margins
+        int pointSize = (int) (cellSpacing*0.8) ;
+
+        int centerX = getWidth() / 2 ;
+        int centerY = getHeight() / 2 - cellSpacing*5;
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    String status = organism[i][j][k].status;
+                    g2.setColor(getColorForStatus(status));
 
-                String status = getTopState(i, j);
-                g.setColor(getColorForStatus(status));
-                g.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
+                    int drawX = centerX + (j - n / 2) * cellSpacing + i * 15;
+                    int drawY = centerY + (k - n / 2) * cellSpacing + i * 15;
+
+                    g2.fillOval(drawX, drawY, pointSize, pointSize);
+                }
             }
         }
     }
 
-    private String getTopState(int x, int y) {
-        for (int z = 0; z < n; z++) {
-            if (organism[x][y][z].status.equals("cancer")) return "cancer";
-            if (organism[x][y][z].status.equals("mutated")) return "mutated";
-            if (organism[x][y][z].status.equals("damaged")) return "damaged";
-            if (organism[x][y][z].status.equals("healthy")) return "healthy";
-        }
-        return "empty";
-    }
 
     private Color getColorForStatus(String status) {
         switch (status) {
@@ -48,8 +53,9 @@ public class PaintPanel extends JPanel {
         }
     }
 
-    public void updateOrganism(Cell[][][] newOrganism) {
+    public void updateOrganism(Cell[][][] newOrganism, int newN) {
         this.organism = newOrganism;
+        this.n = newN;
         repaint();
     }
 }

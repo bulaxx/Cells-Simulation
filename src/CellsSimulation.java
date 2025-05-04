@@ -22,17 +22,19 @@ public class CellsSimulation extends JFrame{
     public CellsSimulation() {
         setTitle("Cells simulation");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(500, 500);
+        setSize(800, 800);
         setLayout(new BorderLayout());
 
         //left Panel - cells
         simulation = new Simulation();
         simulation.inicializeOrganism();
-        simulation.setWall();
+        //simulation.setWall();
         organism = new Cell[n][n][n];
         paintPanel = new PaintPanel(simulation.organism, simulation.n);
         paintPanel.setBorder(BorderFactory.createLineBorder(Color.black));
-        add(paintPanel, BorderLayout.WEST);
+        paintPanel.setPreferredSize(new Dimension(800, 800));
+        add(paintPanel, BorderLayout.CENTER);
+        pack();
 
         //right Panel - parameters
         JPanel rightPanel = new JPanel();
@@ -40,7 +42,7 @@ public class CellsSimulation extends JFrame{
         rightPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
         JLabel parametersLabel = new JLabel("Parameters : ");
-        numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 15, 10);
         numberOfCells.setMajorTickSpacing(5); //glowna podzialka
         numberOfCells.setMinorTickSpacing(1); //najmniejszy odstep
         numberOfCells.setPaintTicks(true);  //rysuje podzialke
@@ -48,6 +50,9 @@ public class CellsSimulation extends JFrame{
         numberOfCells.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 simulation.setN(numberOfCells.getValue());
+                simulation.inicializeOrganism();
+                //simulation.setWall();
+                paintPanel.updateOrganism(simulation.organism, simulation.n);
             }
         });
         numberOfCells.setBorder(BorderFactory.createTitledBorder("Number of Cells"));
@@ -93,7 +98,15 @@ public class CellsSimulation extends JFrame{
 
         JPanel startPanel = new JPanel();
         buttonOnOff = new JButton("ON/OFF");
-        buttonOnOff.addActionListener(e -> startSimulation());
+        buttonOnOff.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                simulation.inicializeOrganism();
+                simulation.setWall();
+                //simulation.randomizeOrganism();
+                simulation.simulation();
+                paintPanel.updateOrganism(simulation.organism, simulation.n);
+            }
+        });
         startPanel.add(buttonOnOff);
 
         rightPanel.add(parametersLabel);
@@ -121,7 +134,7 @@ public class CellsSimulation extends JFrame{
 
             for (int step = 0; step < simulation.k; step++) {
                 simulation.simulation();
-                paintPanel.updateOrganism(simulation.organism);
+                paintPanel.updateOrganism(simulation.organism, simulation.n);
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException e) {

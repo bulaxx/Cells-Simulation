@@ -3,15 +3,15 @@ import java.util.Random;
 
 public class Simulation {
 
-    static int n = 10; //all cells
+    static int n=15; //all cells
     static int nHealth;
-    static int k = 80; //number step tidal
-    static double D = 0.5;  //dose
+    static int k=40; //number step tidal
+    static double D=1;  //dose
     Cell[][][] organism = new Cell[n][n][n];
     static double[][][][] dose = new double[n][n][n][k];
 
     static int healthy, damaged, mutated, cancerous, dead;
-    static double PHit,PD, PMD, PM, PR, PA, PDEM, PRC, PRD, PCRD, PB, PA1, PDD, PDM, PRMM;
+    static double PHit,PD, PMD, PM, PR, PDEM, PRC, PRD, PCRD, PB, PDD, PDM;
 
     static Random rand = new Random();
     static double random, random1, random2;
@@ -135,14 +135,11 @@ public class Simulation {
                 for(int k = 0; k < n; k++){
                     for(int t = 0; t<n; t++) {
                         organism[i][j][k] = new Cell();
-                        organism[i][j][k].status = "empty";
+                        organism[i][j][k].status = "healthy";
                         organism[i][j][k].age = 0.0;
                         organism[i][j][k].mutation = 0.0;
                         organism[i][j][k].mutationNumber = 0.0;
                         organism[i][j][k].damage = 0.0;
-                        if (i == n/2 && j == n/2 && k == n/2) {
-                            organism[i][j][k].status = "healthy";
-                        }
 
                     }
                 }
@@ -208,5 +205,26 @@ public class Simulation {
 
         return organism;
     }
+
+    public void randomizeOrganism() {
+        Random rand = new Random();
+        String[] statuses = {"healthy", "damaged", "mutated", "cancer", "dead", "empty"};
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    int idx = rand.nextInt(statuses.length);
+                    organism[i][j][k].status = statuses[idx];
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
 
 }
