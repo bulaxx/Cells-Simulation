@@ -59,14 +59,14 @@ public class Simulation {
         return PMD;
     }
 
-    //Death as a result of precision irradiation
+    //Death as a result of precise irradiation
     double const_PRD = 6*Math.pow(10, -5);
     public double P_RD(){
         PRD = 1 - Math.exp(-const_PRD*D);
         return PRD;
     }
 
-    //formation of spontaneous damage
+    //formation of spontaneous cell damage
     double t_PM = 0.0004;
     double a_PM = Math.pow(10, -8);
     double n_PM = 3;
@@ -82,7 +82,7 @@ public class Simulation {
         return PDEM;
     }
 
-    //natural reparation of damage
+    //natural repair of damage
     double q_PR = Math.pow(10, -4);
     double a_PR = Math.pow(10, -5);
     double n_PR = 4;
@@ -91,7 +91,7 @@ public class Simulation {
         return PR;
     }
 
-    //mutation formation from damaged cell to mutated cell
+    //formation of mutation converting a damaged cell into a mutated cell
     double a_PDM = 0.002;
     public double PDM(int x, int y, int z) {
         PDM = 1 - Math.exp(-a_PDM*organism[x][y][z].damage);
@@ -177,6 +177,7 @@ public class Simulation {
                         if(organism[i][j][k].status.equals("healthy")){
                             healthy++;
                             random1 = rand.nextDouble();
+                            //healthy hit
                             if(random1 <= PHit){
                                 random2 = rand.nextDouble();
                                 PRD();
@@ -188,12 +189,25 @@ public class Simulation {
 
                                 Pm(i, j, k);
                                 if(random2>=PRD+PD && random2<=PRD+PD+PM){
-                                    organism[i][j][k].status = "damaged";
+                                    organism[i][j][k].damage();
                                     continue;
                                 }
                                 if(random2>= PD+PRD+PM+PS && random2<=PD+PRD+PM+PS+PB){
-                                    //rozmnazanie dodac
+                                    //add reproduction
                                 }
+
+                                P_DEM();
+                                if(random2>=PD+PRD+PM+PS+PB && random2<=PD+PRD+PM+PS+PB+PDEM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+
+                                if(random2>=PD+PRD+PM+PS+PB+PDEM){
+                                    continue;
+                                }
+
+                                //healthy dont hit
+
                             }
                         }
                     }

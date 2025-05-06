@@ -2,6 +2,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class CellsSimulation extends JFrame{
 
@@ -42,7 +44,7 @@ public class CellsSimulation extends JFrame{
         rightPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
         JLabel parametersLabel = new JLabel("Parameters : ");
-        numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 15, 10);
+        numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 15, 15);
         numberOfCells.setMajorTickSpacing(5); //glowna podzialka
         numberOfCells.setMinorTickSpacing(1); //najmniejszy odstep
         numberOfCells.setPaintTicks(true);  //rysuje podzialke
@@ -89,6 +91,11 @@ public class CellsSimulation extends JFrame{
 
         JLabel saveLabel = new JLabel("Results: ");
         saveImg = new JButton("Save as image");
+        saveImg.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                paintPanel.saveIMG();
+            }
+        });
         saveText = new JButton("Save as text file");
         JPanel savePanel = new JPanel();
         savePanel.setLayout(new GridLayout(3,1,5,5));
@@ -101,8 +108,8 @@ public class CellsSimulation extends JFrame{
         buttonOnOff.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 simulation.inicializeOrganism();
-                simulation.setWall();
-                //simulation.randomizeOrganism();
+                //simulation.setWall();
+                simulation.randomizeOrganism();
                 simulation.simulation();
                 paintPanel.updateOrganism(simulation.organism, simulation.n);
             }
