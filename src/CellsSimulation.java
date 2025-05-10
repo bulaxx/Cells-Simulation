@@ -19,7 +19,7 @@ public class CellsSimulation extends JFrame{
     private PaintPanel paintPanel;
     private Simulation simulation;
     private Cell[][][] organism;
-    int n; //ustawic
+    int n;
 
     public CellsSimulation() {
         setTitle("Cells simulation");
@@ -105,12 +105,12 @@ public class CellsSimulation extends JFrame{
 
         JPanel startPanel = new JPanel();
         buttonOnOff = new JButton("ON/OFF");
-        buttonOnOff.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+        buttonOnOff.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
                 simulation.inicializeOrganism();
                 //simulation.setWall();
-                simulation.randomizeOrganism();
                 simulation.simulation();
+                startSimulation();
                 paintPanel.updateOrganism(simulation.organism, simulation.n);
             }
         });
@@ -137,13 +137,13 @@ public class CellsSimulation extends JFrame{
     private void startSimulation() {
         new Thread(() ->{
            simulation.inicializeOrganism();
-           simulation.setWall();
+           //simulation.setWall();
 
-            for (int step = 0; step < simulation.k; step++) {
+            for (int step = 0; step < simulation.s; step++) {
                 simulation.simulation();
                 paintPanel.updateOrganism(simulation.organism, simulation.n);
                 try {
-                    Thread.sleep(300);
+                    Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

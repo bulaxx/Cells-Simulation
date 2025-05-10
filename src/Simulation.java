@@ -5,13 +5,13 @@ public class Simulation {
 
     static int n=15; //all cells
     static int nHealth;
-    static int k=40; //number step tidal
-    static double D=1;  //dose
+    static int s=50; //number step tidal
+    static double D=0.1;  //dose
     Cell[][][] organism = new Cell[n][n][n];
-    static double[][][][] dose = new double[n][n][n][k];
+    double dose_Pa [][][][] =  new double[n][n][n][s];
 
     static int healthy, damaged, mutated, cancerous, dead;
-    static double PHit,PD, PMD, PM, PR, PDEM, PRC, PRD, PCRD, PB, PDD, PDM;
+    static double PHit,PD, PMD, PM, PR, PRDEM, PRC, PRD, PCRD, PB, PDD, PDM, PRMM, PCM;
 
     static Random rand = new Random();
     static double random, random1, random2;
@@ -21,7 +21,7 @@ public class Simulation {
     }
 
     public void setK(int k){
-        Simulation.k = k;
+        Simulation.s = k;
     }
     public void setD(int d){
         Simulation.D = d;
@@ -77,16 +77,16 @@ public class Simulation {
 
     //radiation damage
     double constP_DEM = 0.5;
-    public double P_DEM(){
-        PDEM = 1 - Math.exp(-constP_DEM*D);
-        return PDEM;
+    public double PRDEM(){
+        PRDEM = 1 - Math.exp(-constP_DEM*D);
+        return PRDEM;
     }
 
     //natural repair of damage
     double q_PR = Math.pow(10, -4);
     double a_PR = Math.pow(10, -5);
     double n_PR = 4;
-    public double Ppr(int x, int y, int z) {
+    public double Pr(int x, int y, int z) {
         PR = q_PR*Math.exp(-a_PR*Math.pow(organism[x][y][z].age,n_PR));
         return PR;
     }
@@ -102,13 +102,27 @@ public class Simulation {
     double a_PRC = 0.001;
     double n_PRC = 5;
     public double Prc(int x, int y, int z) {
-        PRC = 1 - Math.exp(-a_PRC*Math.pow(organism[x][y][z].mutationNumber,n_PRC));
+        PRC = 1 - Math.exp(-a_PRC*Math.pow(organism[x][y][z].mutation,n_PRC));
         return PRC;
+    }
+
+    double a_PRMM = 0.002;
+    double n_PRMM = 2;
+    public double PRMM(int x, int y, int z) {
+        PRMM = 1 - Math.exp(-a_PRMM*Math.pow(organism[x][y][z].mutation, n_PRMM));
+        return PRMM;
+    }
+
+    double beta1 = 0.001;
+    double beta2 = 0.00001;
+    public double PCM(int x, int y, int z) {
+        PCM = beta1 + organism[x][y][z].age * beta2;
+        return PCM;
     }
 
     //Cancer cell death due to radio-sensitivity
     double const_PCRD = 6*Math.pow(10, -6);
-    public double PRD() {
+    public double PCRD() {
         PCRD = 1 - Math.exp(-const_PCRD*D);
         return PCRD;
     }
@@ -127,6 +141,34 @@ public class Simulation {
 
     //death of a cancer cell from natural causes
     double PCD = 0.002;
+
+    public Cell[][][] reproduction(int x , int y, int z) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    if(organism[i][j][k].status == "empty" ){
+                        if(organism[x][y][z].status == "healthy"){
+                            organism[i][j][k].status = "healthy";
+                            i = j =k =n;
+                        }
+                        if(organism[x][y][z].status == "damaged"){
+                            organism[i][j][k].status = "damaged";
+                            i = j =k =n;
+                        }
+                        if(organism[x][y][z].status == "mutated"){
+                            organism[i][j][k].status = "mutated";
+                            i = j =k =n;
+                        }
+                        if(organism[x][y][z].status == "cancer"){
+                            organism[i][j][k].status ="cancer";
+                            i = j =k =n;
+                        }
+                    }
+                }
+            }
+        }
+        return organism;
+    }
 
 
     public Cell[][][] inicializeOrganism(){
@@ -162,7 +204,7 @@ public class Simulation {
     }
 
     public Cell[][][] simulation(){
-        for(int a = 0; a < k; a++){
+        for(int a = 0; a < s; a++){
             healthy = 0;
             damaged = 0;
             mutated = 0;
@@ -174,40 +216,280 @@ public class Simulation {
                     for(int k = 1; k < n-1; k++){
                         organism[i][j][k].age += 0.002;
                         PHit();
-                        if(organism[i][j][k].status.equals("healthy")){
+                        if(organism[i][j][k].status.equals("healthy")) {
                             healthy++;
                             random1 = rand.nextDouble();
                             //healthy hit
-                            if(random1 <= PHit){
+                            if (random1 <= PHit) {
                                 random2 = rand.nextDouble();
-                                PRD();
-                                Pd(i, j,k);
-                                if(random2 <= PRD+PD){
+                                P_RD();
+                                Pd(i, j, k);
+                                if (random2 <= PRD + PD) {
                                     organism[i][j][k].status = "dead";
                                     continue;
                                 }
 
                                 Pm(i, j, k);
-                                if(random2>=PRD+PD && random2<=PRD+PD+PM){
+                                if (random2 >= PRD + PD && random2 <= PRD + PD + PM) {
                                     organism[i][j][k].damage();
                                     continue;
                                 }
-                                if(random2>= PD+PRD+PM+PS && random2<=PD+PRD+PM+PS+PB){
-                                    //add reproduction
+                                if (random2 >= PD + PRD + PM + PS && random2 <= PD + PRD + PM + PS + PB) {
+                                    reproduction(i, j, k);
+                                    continue;
                                 }
 
-                                P_DEM();
-                                if(random2>=PD+PRD+PM+PS+PB && random2<=PD+PRD+PM+PS+PB+PDEM){
+                                PRDEM();
+                                if (random2 >= PD + PRD + PM + PS + PB && random2 <= PD + PRD + PM + PS + PB + PRDEM) {
                                     organism[i][j][k].damage();
                                     continue;
                                 }
 
-                                if(random2>=PD+PRD+PM+PS+PB+PDEM){
+                                if (random2 >= PD + PRD + PM + PS + PB + PRDEM) {
                                     continue;
                                 }
 
-                                //healthy dont hit
+                            }
 
+                            //healthy dont hit
+                            if (random1 >= PHit) {
+                                random2 = rand.nextDouble();
+                                Pd(i, j, k);
+                                if (random2 <= PD) {
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+
+                                Pm(i, j, k);
+                                if (random2 >= PD && random2 <= PM + PD) {
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+
+                                if (random2 >= PD + PM && random2 <= PM + PD + PS) {
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+
+                                if (random2 >= PD + PM + PS) {
+                                    continue;
+                                }
+
+                            }
+
+                        }
+
+                        if(organism[i][j][k].status=="damaged"){
+                            damaged++;
+                            random1=rand.nextDouble();
+                            if (random1 <= PHit) {
+                                dose_Pa[i][j][k][s] = D;
+                                random2=rand.nextDouble();
+                                Pdd(i, j, k);
+                                P_RD();
+                                if(random2 <= PRD + PD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                Pm(i, j, k);
+                                if(random2>= PRD + PD && random2 <= PRD + PD + PM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+                                Pr(i, j, k);
+                                if(random2>= PRD+PD+PM && random2 <= PRD+PD+PM+PR){
+                                    if(organism[i][j][k].damage == 1){
+                                        organism[i][j][k].damage -=1;
+                                        organism[i][j][k].status = "healthy";
+                                    }
+                                    if(organism[i][j][k].damage >1){
+                                        organism[i][j][k].damage -=1;
+                                    }
+
+                                }
+                                if(random2 >= PRD + PD+PS+PR && random2 <= PRD+PD+PS+PR+PDS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+                                PRDEM();
+                                if(random2 >= PD+PRD+PS+PR+PDS && random2 <= PRD+PD+PS+PR+PDS+PRDEM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+
+                                PDM(i, j, k);
+                                if(random2 >= PD+PRD+PS+PR+PDS+PRDEM && random2 <= PRD+PD+PS+PR+PDS+PRDEM+PDM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
+
+                            }
+
+                            if(random1 >= PHit) {
+                                random1 = rand.nextDouble();
+                                Pdd(i, j, k);
+                                if(random2 <= PDD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                Pm(i, j, k);
+                                if(random2 >= PDD && random2 <= PDD + PM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+                                Pr(i, j, k);
+                                if(random2 >= PDD + PM && random2 <= PDD + PM + PR){
+                                    if(organism[i][j][k].damage == 1){
+                                        organism[i][j][k].damage -=1;
+                                        organism[i][j][k].status = "healthy";
+                                    }
+                                    if(organism[i][j][k].damage >1){
+                                        organism[i][j][k].damage -=1;
+                                    }
+                                }
+                                if(random2>= PDD+PM+PR && random2 <= PDD+PM+PR+PDS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+                                PDM(i, j, k);
+                                if(random2>= PDD+PM+PR+PDS && random2 <= PDD+PM+PR+PDS+PDM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if(organism[i][j][k].status=="mutated"){
+                            random1 = rand.nextDouble();
+                            PHit();
+                            if(random1 <= PHit){
+                                dose_Pa[i][j][k][s] = D;
+                                random2=rand.nextDouble();
+                                Pmd(i, j, k);
+                                if(random2 <= PMD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                P_RD();
+                                if(random2 >= PMD && random2 <= PMD + PRD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                Pm(i, j, k);
+                                if(random2 >= PMD+PRD && random2 <= PMD+ PRD + PM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+                                Pr(i, j, k);
+                                if(random2 >= PMD+PRD +PM && random2 <= PMD + PRD + PM+ PR){
+                                    if(organism[i][j][k].damage == 1){
+                                        organism[i][j][k].damage -=1;
+                                        organism[i][j][k].status = "healthy";
+                                    }
+                                    if(organism[i][j][k].damage >1){
+                                        organism[i][j][k].damage -=1;
+                                    }
+                                }
+
+                                if(random2 >= PMD+PRD +PM+PR && random2 <= PMD + PRD + PM+ PR+PMS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+                                PRDEM();
+                                if(random2 >= PMD+PRD +PM+PR+PMS && random2 <= PMD + PRD + PM+ PR+PMS+PRDEM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+
+                                PRMM(i, j, k);
+                                if(random2 >= PMD+PRD +PM+PR+PMS+PRDEM && random2 <= PMD + PRD + PM+ PR+PMS+PRDEM+PRMM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
+                            }
+
+                            if(random1 <= PHit){
+                                random2 = rand.nextDouble();
+                                Pmd(i, j, k);
+                                if(random2 <= PMD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                Pm(i, j, k);
+                                if(random2 >= PMD && random2 <= PMD + PM){
+                                    organism[i][j][k].damage();
+                                    continue;
+                                }
+                                Pr(i, j, k);
+                                if(random2 >= PMD+PM && random2 <= PMD + PM+PR){
+                                    if(organism[i][j][k].damage == 1){
+                                        organism[i][j][k].damage -=1;
+                                        organism[i][j][k].status = "healthy";
+                                    }
+                                    if(organism[i][j][k].damage >1){
+                                        organism[i][j][k].damage -=1;
+                                    }
+                                }
+                                if(random2 >= PMD+PM+PR && random2 <= PMD + PM + PR+PMS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+
+                                PRMM(i, j, k);
+                                if(random2>= PMD+PM+PR+PMS && random2 <= PMD + PM+ PR+PMS+PRMM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if(organism[i][j][k].status=="cancer"){
+                            random1 = rand.nextDouble();
+                            PHit();
+                            if(random1 <= PHit){
+                                dose_Pa[i][j][k][s] = D;
+                                random2 = rand.nextDouble();
+                                if(random2 <= PCD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                P_RD();
+                                if(random2 >= PCD && random2 <= PCD + PRD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                if(random2 >= PCD+PRD && random2 <= PCD + PRD+PCS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+                                PCRD();
+                                if(random2 >= PCD+PRD+PCS && random2 <= PCD + PRD + PCS+PCRD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                PCM(i, j, k);
+                                if(random2 >= PCD+PRD+PCS+PCRD && random2 <= PCD + PRD + PCS+PCRD+PCM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
+
+                            }
+
+                            if(random1 >= PHit){
+                                random2 = rand.nextDouble();
+                                if(random2 <= PCD){
+                                    organism[i][j][k].status = "dead";
+                                    continue;
+                                }
+                                if(random2 >= PCD && random2 <= PCD + PCS){
+                                    reproduction(i,j,k);
+                                    continue;
+                                }
+                                PCM(i, j, k);
+                                if(random2 >= PCD+PCS && random2 <= PCD + PCS+PCM){
+                                    organism[i][j][k].mutation();
+                                    continue;
+                                }
                             }
                         }
                     }

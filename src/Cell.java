@@ -7,6 +7,11 @@ public class Cell {
 
     public void damage(){
         damage += 1;
-        status = "damage";
+        status = "damaged";
+    }
+
+    public void mutation(){
+        mutation += 1;
+        status = "mutated";
     }
 }
