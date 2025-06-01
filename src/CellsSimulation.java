@@ -4,6 +4,13 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Set;
+
 
 public class CellsSimulation extends JFrame{
 
@@ -13,18 +20,29 @@ public class CellsSimulation extends JFrame{
     JButton saveImg;
     JButton saveText;
     JButton buttonOnOff;
+    JButton buttonReset;
     JMenuBar menuBar;
     JMenu menu;
     JMenuItem parameterSelection;
+    JCheckBox healthyBox;
+    JCheckBox deadBox;
+    JCheckBox damagedBox;
+    JCheckBox mutatedBox;
+    JCheckBox cancerBox;
+    private Set<String> visibleStatuses;
     private PaintPanel paintPanel;
     private Simulation simulation;
     private Cell[][][] organism;
     int n;
+    private boolean run = false;
+    private int step = 0;
+    private Timer timer;
+    private File logFile;
 
     public CellsSimulation() {
         setTitle("Cells simulation");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 800);
+        setSize(1500,1500);
         setLayout(new BorderLayout());
 
         //left Panel - cells
@@ -34,9 +52,40 @@ public class CellsSimulation extends JFrame{
         organism = new Cell[n][n][n];
         paintPanel = new PaintPanel(simulation.organism, simulation.n);
         paintPanel.setBorder(BorderFactory.createLineBorder(Color.black));
-        paintPanel.setPreferredSize(new Dimension(800, 800));
+        paintPanel.setPreferredSize(new Dimension(1000, 800));
         add(paintPanel, BorderLayout.CENTER);
         pack();
+
+        //left Panel
+        visibleStatuses = new HashSet<>(Set.of("healthy", "dead", "damaged", "mutated", "cancer"));
+
+        JPanel checkPanel = new JPanel();
+        healthyBox = new JCheckBox("Healthy", true);
+        deadBox = new JCheckBox("Dead", true);
+        damagedBox = new JCheckBox("Damaged", true);
+        mutatedBox = new JCheckBox("Mutated", true);
+        cancerBox = new JCheckBox("Cancer", true);
+        ItemListener listener = e->{
+            visibleStatuses.clear();
+            if (healthyBox.isSelected()) visibleStatuses.add("healthy");
+            if (deadBox.isSelected()) visibleStatuses.add("dead");
+            if (damagedBox.isSelected()) visibleStatuses.add("damaged");
+            if (mutatedBox.isSelected()) visibleStatuses.add("mutated");
+            if (cancerBox.isSelected()) visibleStatuses.add("cancer");
+
+            paintPanel.setVisibleStatuses(visibleStatuses);
+        };
+        healthyBox.addItemListener(listener);
+        deadBox.addItemListener(listener);
+        damagedBox.addItemListener(listener);
+        mutatedBox.addItemListener(listener);
+        cancerBox.addItemListener(listener);
+        checkPanel.add(healthyBox);
+        checkPanel.add(deadBox);
+        checkPanel.add(damagedBox);
+        checkPanel.add(mutatedBox);
+        checkPanel.add(cancerBox);
+        add(checkPanel, BorderLayout.SOUTH);
 
         //right Panel - parameters
         JPanel rightPanel = new JPanel();
@@ -59,7 +108,7 @@ public class CellsSimulation extends JFrame{
         });
         numberOfCells.setBorder(BorderFactory.createTitledBorder("Number of Cells"));
 
-        numberOfStep = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        numberOfStep = new JSlider(JSlider.HORIZONTAL, 0, 50, 10 );
         numberOfStep.setMajorTickSpacing(5);
         numberOfStep.setMinorTickSpacing(1);
         numberOfStep.setPaintTicks(true);
@@ -71,7 +120,7 @@ public class CellsSimulation extends JFrame{
             }
         });
 
-        dose = new JSlider(JSlider.HORIZONTAL, 1, 21, 10);
+        dose = new JSlider(JSlider.HORIZONTAL, 0, 5, 1);
         dose.setMajorTickSpacing(5);
         dose.setMinorTickSpacing(1);
         dose.setPaintTicks(true);
@@ -97,6 +146,24 @@ public class CellsSimulation extends JFrame{
             }
         });
         saveText = new JButton("Save as text file");
+        saveText.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                int option = chooser.showSaveDialog(CellsSimulation.this);
+                if (option == JFileChooser.APPROVE_OPTION) {
+                    logFile = chooser.getSelectedFile();
+                    try {
+                        if (!logFile.exists()) {
+                            logFile.createNewFile();
+                        }
+                        JOptionPane.showMessageDialog(CellsSimulation.this, "File selected: " + logFile.getAbsolutePath());
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(CellsSimulation.this, "Error creating file: " + ex.getMessage());
+                    }
+                }
+            }
+        });
+
         JPanel savePanel = new JPanel();
         savePanel.setLayout(new GridLayout(3,1,5,5));
         savePanel.add(saveLabel);
@@ -107,14 +174,53 @@ public class CellsSimulation extends JFrame{
         buttonOnOff = new JButton("ON/OFF");
         buttonOnOff.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                simulation.inicializeOrganism();
-                //simulation.setWall();
-                simulation.simulation();
-                startSimulation();
-                paintPanel.updateOrganism(simulation.organism, simulation.n);
+                if(!run){
+                    //simulation.inicializeOrganism();
+                    //simulation.setWall();
+                    //simulation.simulation();
+                    startSimulation();
+                    //paintPanel.updateOrganism(simulation.organism, simulation.n);
+                    run = true;
+                    buttonOnOff.setText("OFF");
+                }
+                else{
+                    stopSimulation();
+                    run = false;
+                    buttonOnOff.setText("ON");
+                }
+
             }
         });
+        buttonReset = new JButton("Reset");
+        buttonReset.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                resetSimulation();
+            }
+        });
+
+        timer = new Timer(500, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Timer: " +step);
+                if(step>= simulation.s){
+                    stopSimulation();
+                    buttonOnOff.setText("ON");
+                    return;
+                }
+                simulation.simulation();
+                paintPanel.updateOrganism(simulation.organism, simulation.n);
+                if(logFile != null){
+                    System.out.println("Saving log file: " + logFile.getAbsolutePath());
+                    logToFile(logFile, step);
+                }else{
+                    System.out.println("Null log file");
+                }
+
+                step++;
+            }
+        });
+
         startPanel.add(buttonOnOff);
+        startPanel.add(buttonReset);
 
         rightPanel.add(parametersLabel);
         rightPanel.add(parametersPanel);
@@ -132,23 +238,43 @@ public class CellsSimulation extends JFrame{
         menuBar.add(menu);
         setJMenuBar(menuBar);
 
+
     }
 
-    private void startSimulation() {
-        new Thread(() ->{
-           simulation.inicializeOrganism();
-           //simulation.setWall();
 
-            for (int step = 0; step < simulation.s; step++) {
-                simulation.simulation();
-                paintPanel.updateOrganism(simulation.organism, simulation.n);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+
+    private void startSimulation() {
+            //simulation.inicializeOrganism();
+            //simulation.simulation();
+            //paintPanel.updateOrganism(simulation.organism, simulation.n);
+            timer.start();
+    }
+
+    private void stopSimulation() {
+        run = false;
+        timer.stop();
+    }
+
+    private void resetSimulation(){
+        simulation.inicializeOrganism();
+        step = 0;
+        paintPanel.updateOrganism(simulation.organism, simulation.n);
+    }
+
+    private void logToFile(File file, int step){
+        try(PrintWriter out = new PrintWriter(new FileOutputStream(file, true))) {
+            out.println("Step: " + step + ":");
+            for(int i = 0; i < simulation.n; i++){
+                for(int j = 0; j < simulation.n; j++){
+                    for(int k = 0; k < simulation.n; k++){
+                        out.println("[" + i + "][" + j + "][" + k + "]" + simulation.organism[i][j][k].status + "\tage:" + String.format("%.4f",simulation.organism[i][j][k].age) + "\tdamage:" + simulation.organism[i][j][k].damage + "\tmutation: " + simulation.organism[i][j][k].mutation+   "\t dose:"+ simulation.dose_Pa[i][j][k][step] + "\n");
+                    }
                 }
             }
-        }).start();
+            out.println();
+        } catch (Exception e){
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private static void openParameterSelection(JFrame parent) {   //passes references to the head window
@@ -399,6 +525,7 @@ public class CellsSimulation extends JFrame{
 
     public static void main(String[] args) {
         CellsSimulation cells = new CellsSimulation();
+        cells.setExtendedState(JFrame.MAXIMIZED_BOTH);
         cells.setVisible(true);
     }
 }

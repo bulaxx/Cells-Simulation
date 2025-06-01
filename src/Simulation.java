@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.Math;
 import java.util.Random;
 
@@ -9,9 +11,11 @@ public class Simulation {
     static double D=0.1;  //dose
     Cell[][][] organism = new Cell[n][n][n];
     double dose_Pa [][][][] =  new double[n][n][n][s];
+    private boolean logToFile;
+    private final double stepAge = 0.002;
 
     static int healthy, damaged, mutated, cancerous, dead;
-    static double PHit,PD, PMD, PM, PR, PRDEM, PRC, PRD, PCRD, PB, PDD, PDM, PRMM, PCM;
+    static double PHit,PD, PMD, PM, PR, PRDEM, PRC, PRD, PCRD, PB, PDD, PDM, PRMM, PCM, PAR;
 
     static Random rand = new Random();
     static double random, random1, random2;
@@ -29,7 +33,8 @@ public class Simulation {
 
     double const_PHit = 0.04;
     public double PHit(){
-        return (1 - Math.exp(-const_PHit * D));
+        PHit = (1 - Math.exp(-const_PHit * D));
+        return PHit;
     }
 
     //death of a healthy cell from natural causes
@@ -76,7 +81,7 @@ public class Simulation {
     }
 
     //radiation damage
-    double constP_DEM = 0.5;
+    double constP_DEM = 0.2;
     public double PRDEM(){
         PRDEM = 1 - Math.exp(-constP_DEM*D);
         return PRDEM;
@@ -92,21 +97,21 @@ public class Simulation {
     }
 
     //formation of mutation converting a damaged cell into a mutated cell
-    double a_PDM = 0.002;
+    double a_PDM = 0.002; //zamiast 0.002
     public double PDM(int x, int y, int z) {
         PDM = 1 - Math.exp(-a_PDM*organism[x][y][z].damage);
         return PDM;
     }
 
     //transformation of a mutant cell into a cancerous one
-    double a_PRC = 0.001;
+    double a_PRC = 0.002; //zamiast 0.002
     double n_PRC = 5;
     public double Prc(int x, int y, int z) {
         PRC = 1 - Math.exp(-a_PRC*Math.pow(organism[x][y][z].mutation,n_PRC));
         return PRC;
     }
 
-    double a_PRMM = 0.002;
+    double a_PRMM = 0.002; //zamiast 0.002
     double n_PRMM = 2;
     public double PRMM(int x, int y, int z) {
         PRMM = 1 - Math.exp(-a_PRMM*Math.pow(organism[x][y][z].mutation, n_PRMM));
@@ -125,6 +130,31 @@ public class Simulation {
     public double PCRD() {
         PCRD = 1 - Math.exp(-const_PCRD*D);
         return PCRD;
+    }
+
+    //adaptive response
+    double a0_PAR = 22.94;
+    double a1_PAR = 79.45;
+    double a2_PAR = 0.0832;
+    double PAR1;
+    public double PAR(int x, int y, int z) {
+        double Dk =0;
+        double K = organism[x][y][z].age;
+        double k =stepAge;
+        double diff = 0;
+        double thisDose = 0;
+        int step = (int)(K/k);
+        for(int i =0;i<step;i++) {
+            if(dose_Pa[x][y][z][i] > 0){
+                PAR1 = 0;
+                thisDose = dose_Pa[x][y][z][i];
+                diff = K-i;
+                PAR1 = a0_PAR * (thisDose*thisDose)*(diff*diff)*Math.exp(2-a1_PAR*thisDose-a2_PAR*diff);
+                PAR += PAR1;
+            }
+        }
+
+        return PAR;
     }
 
     //healthy cell division
@@ -146,22 +176,21 @@ public class Simulation {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 for (int k = 0; k < n; k++) {
-                    if(organism[i][j][k].status == "empty" ){
-                        if(organism[x][y][z].status == "healthy"){
+                    if ("empty".equals(organism[i][j][k].status)) {
+                        String parentStatus = organism[x][y][z].status;
+
+                        if ("healthy".equals(parentStatus)) {
                             organism[i][j][k].status = "healthy";
-                            i = j =k =n;
-                        }
-                        if(organism[x][y][z].status == "damaged"){
+                            i = j = k = n;
+                        } else if ("damaged".equals(parentStatus)) {
                             organism[i][j][k].status = "damaged";
-                            i = j =k =n;
-                        }
-                        if(organism[x][y][z].status == "mutated"){
+                            i = j = k = n;
+                        } else if ("mutated".equals(parentStatus)) {
                             organism[i][j][k].status = "mutated";
-                            i = j =k =n;
-                        }
-                        if(organism[x][y][z].status == "cancer"){
-                            organism[i][j][k].status ="cancer";
-                            i = j =k =n;
+                            i = j = k = n;
+                        } else if ("cancer".equals(parentStatus)) {
+                            organism[i][j][k].status = "cancer";
+                            i = j = k = n;
                         }
                     }
                 }
@@ -171,22 +200,22 @@ public class Simulation {
     }
 
 
+
     public Cell[][][] inicializeOrganism(){
         for(int i= 0; i < n; i++){
             for(int j = 0; j < n; j++){
                 for(int k = 0; k < n; k++){
-                    for(int t = 0; t<n; t++) {
                         organism[i][j][k] = new Cell();
                         organism[i][j][k].status = "healthy";
                         organism[i][j][k].age = 0.0;
-                        organism[i][j][k].mutation = 0.0;
+                        organism[i][j][k].mutation = 0;
                         organism[i][j][k].mutationNumber = 0.0;
-                        organism[i][j][k].damage = 0.0;
-
-                    }
+                        organism[i][j][k].damage = 0;
                 }
             }
         }
+
+
         return organism;
     }
 
@@ -211,16 +240,18 @@ public class Simulation {
             cancerous = 0;
             dead = 0;
 
-            for(int i = 1; i<n-1; i++){
-                for(int j = 1; j<n-1; j++){
-                    for(int k = 1; k < n-1; k++){
-                        organism[i][j][k].age += 0.002;
+            for(int i = 0; i<=n; i++){
+                for(int j = 0; j<=n; j++){
+                    for(int k = 0; k <= n; k++){
+                        organism[i][j][k].age += 0.0001;
+                        //organism[i][j][k].age = Math.round(organism[i][j][k].age * 1000.0) / 1000.0;
                         PHit();
                         if(organism[i][j][k].status.equals("healthy")) {
                             healthy++;
                             random1 = rand.nextDouble();
                             //healthy hit
                             if (random1 <= PHit) {
+                                dose_Pa[i][j][k][a] = D;
                                 random2 = rand.nextDouble();
                                 P_RD();
                                 Pd(i, j, k);
@@ -234,18 +265,18 @@ public class Simulation {
                                     organism[i][j][k].damage();
                                     continue;
                                 }
-                                if (random2 >= PD + PRD + PM + PS && random2 <= PD + PRD + PM + PS + PB) {
+                                if (random2 >= PD + PRD + PM  && random2 <= PD + PRD + PM + PS) {
                                     reproduction(i, j, k);
                                     continue;
                                 }
 
                                 PRDEM();
-                                if (random2 >= PD + PRD + PM + PS + PB && random2 <= PD + PRD + PM + PS + PB + PRDEM) {
+                                if (random2 >= PD + PRD + PM + PS && random2 <= PD + PRD + PM + PS + PRDEM) {
                                     organism[i][j][k].damage();
                                     continue;
                                 }
 
-                                if (random2 >= PD + PRD + PM + PS + PB + PRDEM) {
+                                if (random2 >= PD + PRD + PM + PS + PRDEM) {
                                     continue;
                                 }
 
@@ -279,11 +310,11 @@ public class Simulation {
 
                         }
 
-                        if(organism[i][j][k].status=="damaged"){
+                        if("damaged".equals(organism[i][j][k].status)){
                             damaged++;
                             random1=rand.nextDouble();
                             if (random1 <= PHit) {
-                                dose_Pa[i][j][k][s] = D;
+                                dose_Pa[i][j][k][a] = D;
                                 random2=rand.nextDouble();
                                 Pdd(i, j, k);
                                 P_RD();
@@ -307,12 +338,12 @@ public class Simulation {
                                     }
 
                                 }
-                                if(random2 >= PRD + PD+PS+PR && random2 <= PRD+PD+PS+PR+PDS){
+                                if(random2 >= PRD + PD+PM+PR && random2 <= PRD+PD+PM+PR+PDS){
                                     reproduction(i,j,k);
                                     continue;
                                 }
                                 PRDEM();
-                                if(random2 >= PD+PRD+PS+PR+PDS && random2 <= PRD+PD+PS+PR+PDS+PRDEM){
+                                if(random2 >= PD+PRD+PM+PR+PDS && random2 <= PRD+PD+PS+PM+PDS+PRDEM){
                                     organism[i][j][k].damage();
                                     continue;
                                 }
@@ -359,11 +390,12 @@ public class Simulation {
                             }
                         }
 
-                        if(organism[i][j][k].status=="mutated"){
+                        if("mutated".equals(organism[i][j][k].status)){
+                            mutated++;
                             random1 = rand.nextDouble();
                             PHit();
                             if(random1 <= PHit){
-                                dose_Pa[i][j][k][s] = D;
+                                dose_Pa[i][j][k][a] = D;
                                 random2=rand.nextDouble();
                                 Pmd(i, j, k);
                                 if(random2 <= PMD){
@@ -443,11 +475,12 @@ public class Simulation {
                             }
                         }
 
-                        if(organism[i][j][k].status=="cancer"){
+                        if("cancer".equals(organism[i][j][k].status)){
+                            cancerous++;
                             random1 = rand.nextDouble();
                             PHit();
                             if(random1 <= PHit){
-                                dose_Pa[i][j][k][s] = D;
+                                dose_Pa[i][j][k][a] = D;
                                 random2 = rand.nextDouble();
                                 if(random2 <= PCD){
                                     organism[i][j][k].status = "dead";
@@ -495,11 +528,31 @@ public class Simulation {
                     }
                 }
             }
+            writeToFile(s, organism);
 
         }
 
 
         return organism;
+    }
+
+    //tego nie uzywam
+    public void writeToFile(int step, Cell[][][] organism) {
+        if(!logToFile) return;
+
+        try(FileWriter writer= new FileWriter("cell_log.txt", true)){
+            for(int i = 0; i<n; i++){
+                for(int j = 0; j<n; j++){
+                    for(int k = 0; k<n; k++){
+                        if(organism[i][j][k].status != null){
+                            writer.write(String.format("t=%d; x=%d; y=%d; z=%d; age=%.2f; damage=%d; mutation=%d; status=%s%n", step, i, j, k, organism[i][j][k].age, organism[i][j][k].damage, organism[i][j][k].mutation, organism[i][j][k].status));
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void randomizeOrganism() {

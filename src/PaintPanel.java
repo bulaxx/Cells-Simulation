@@ -6,13 +6,15 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class PaintPanel extends JPanel {
 
     private Cell[][][] organism;
     private int n;
-
+    private Set<String> visibleStatuses = new HashSet<>(Set.of("healthy", "dead", "damaged", "mutated", "cancer"));
     public PaintPanel(Cell[][][] organism, int newN) {
         this.organism = organism;
         this.n = newN;
@@ -36,6 +38,7 @@ public class PaintPanel extends JPanel {
             for (int j = 0; j < n; j++) {
                 for (int k = 0; k < n; k++) {
                     String status = organism[i][j][k].status;
+                    if(!visibleStatuses.contains(status)) continue;
                     Color baseColor = getColorForStatus(status);
 
                     int drawX = centerX + (j - n / 2) * cellSpacing + i * 15;
@@ -68,13 +71,18 @@ public class PaintPanel extends JPanel {
         }
     }
 
+    public void setVisibleStatuses(Set<String> visibleStatuses) {
+        this.visibleStatuses = visibleStatuses;
+        repaint();
+    }
+
 
     private Color getColorForStatus(String status) {
         switch (status) {
             case "healthy": return Color.GREEN;
-            case "damaged": return Color.YELLOW;
-            case "mutated": return Color.ORANGE;
-            case "cancer": return Color.RED;
+            case "damaged": return Color.decode("#e9e438");
+            case "mutated": return Color.decode("#e7761d");
+            case "cancer": return Color.decode("#f03725");
             case "dead": return Color.BLACK;
             case "empty": return Color.WHITE;
             default: return Color.GRAY;

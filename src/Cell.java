@@ -1,17 +1,17 @@
 public class Cell {
     public double age;
-    public double mutation;
-    public double damage;
+    public int mutation;
+    public int damage;
     public double mutationNumber;
     public String status;
 
     public void damage(){
-        damage += 1;
-        status = "damaged";
+        this.damage += 1;
+        this.status = "damaged";
     }
 
     public void mutation(){
-        mutation += 1;
-        status = "mutated";
+        this.mutation += 1;
+        this.status = "mutated";
     }
 }
