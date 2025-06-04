@@ -176,7 +176,7 @@ public class Simulation {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 for (int k = 0; k < n; k++) {
-                    if ("empty".equals(organism[i][j][k].status)) {
+                    if ("empty".equals(organism[i][j][k].status) || "dead".equals(organism[i][j][k].status)) {
                         String parentStatus = organism[x][y][z].status;
 
                         if ("healthy".equals(parentStatus)) {
@@ -318,7 +318,7 @@ public class Simulation {
                                 random2=rand.nextDouble();
                                 Pdd(i, j, k);
                                 P_RD();
-                                if(random2 <= PRD + PD){
+                                if(random2 <= PRD + PDD){
                                     organism[i][j][k].status = "dead";
                                     continue;
                                 }

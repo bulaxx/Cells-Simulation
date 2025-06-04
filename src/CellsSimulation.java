@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 
@@ -29,6 +31,10 @@ public class CellsSimulation extends JFrame{
     JCheckBox damagedBox;
     JCheckBox mutatedBox;
     JCheckBox cancerBox;
+    JMenu menuL;
+    JMenuBar menuBarL;
+    JMenuItem itemPL;
+    JMenuItem itemENl;
     private Set<String> visibleStatuses;
     private PaintPanel paintPanel;
     private Simulation simulation;
@@ -40,10 +46,30 @@ public class CellsSimulation extends JFrame{
     private File logFile;
 
     public CellsSimulation() {
-        setTitle("Cells simulation");
+        Messages.setLocale(new Locale("pl", "PL")); // ustawia PL
+        setTitle(Messages.get("title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1500,1500);
         setLayout(new BorderLayout());
+
+        menuL = new JMenu(Messages.get("changeLanguage"));
+        menuBarL = new JMenuBar();
+        itemPL = new JMenuItem(Messages.get("itemPL"));
+        itemPL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeLanguage("pl", "PL");
+            }
+        });
+        itemENl = new JMenuItem(Messages.get("itemENl"));
+        itemENl.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeLanguage("en", "US");
+            }
+        });
+        menuL.add(itemPL);
+        menuL.add(itemENl);
+        menuBarL.add(menuL);
+        setJMenuBar(menuBarL);
 
         //left Panel - cells
         simulation = new Simulation();
@@ -241,6 +267,16 @@ public class CellsSimulation extends JFrame{
 
     }
 
+    private void changeLanguage(String lang, String country) {
+        Locale newLocale = new Locale(lang, country);
+        ResourceBundle.clearCache();
+        ResourceBundle messages = ResourceBundle.getBundle("MessagesBundle", newLocale);
+
+        paintPanel.repaint();
+        this.dispose();
+        new CellsSimulation().setVisible(true);
+    }
+
 
 
     private void startSimulation() {
@@ -268,6 +304,27 @@ public class CellsSimulation extends JFrame{
                 for(int j = 0; j < simulation.n; j++){
                     for(int k = 0; k < simulation.n; k++){
                         out.println("[" + i + "][" + j + "][" + k + "]" + simulation.organism[i][j][k].status + "\tage:" + String.format("%.4f",simulation.organism[i][j][k].age) + "\tdamage:" + simulation.organism[i][j][k].damage + "\tmutation: " + simulation.organism[i][j][k].mutation+   "\t dose:"+ simulation.dose_Pa[i][j][k][step] + "\n");
+                        if(simulation.organism[i][j][k].status.equals("healthy")){
+                            out.printf("rand1 = %.4f \t rand2 =%.4f \t", simulation.random1, simulation.random2);
+                            out.printf("\tPRD = %.4f \t PD = %.4f \t PM = %.4f \t PRDEM = %.4f \n",
+                            simulation.P_RD(), simulation.Pd(i, j, k), simulation.Pm(i, j, k), simulation.PRDEM());
+
+                        }
+                        else if(simulation.organism[i][j][k].status.equals("damaged")){
+                            out.printf("\tPRD = %.4f \t PD = %.4f \t PM = %.4f \t PR = %.4f \t PRDEM = %.4f, PDM = %.4f \n",
+                                    simulation.P_RD(), simulation.Pdd(i, j, k), simulation.Pm(i, j, k), simulation.Pr(i, j,k), simulation.PRDEM(), simulation.PDM(i,j,k));
+
+                        }
+                        else if(simulation.organism[i][j][k].status.equals("mutated")){
+                            out.printf("\tPRD = %.4f \t PMD = %.4f \t PM = %.4f \t PR = %.4f \t PRDEM = %.4f, PRMM = %.4f \n",
+                                    simulation.P_RD(), simulation.Pmd(i, j, k), simulation.Pm(i, j, k), simulation.Pr(i, j,k), simulation.PRDEM(), simulation.PRMM(i,j,k));
+
+                        }
+                        else if(simulation.organism[i][j][k].status.equals("cancer")){
+                            out.printf("\tPRD = %.4f \t PCRD = %.4f \t PCM = %.4f  \n",
+                                    simulation.P_RD(), simulation.PCRD, simulation.PCM(i, j,k));
+
+                        }
                     }
                 }
             }
