@@ -1,6 +1,7 @@
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.Math;
+import java.sql.SQLOutput;
 import java.util.Random;
 
 public class Simulation {
@@ -148,7 +149,7 @@ public class Simulation {
             if(dose_Pa[x][y][z][i] > 0){
                 PAR1 = 0;
                 thisDose = dose_Pa[x][y][z][i];
-                diff = K-i;
+                diff = K-i*k;
                 PAR1 = a0_PAR * (thisDose*thisDose)*(diff*diff)*Math.exp(2-a1_PAR*thisDose-a2_PAR*diff);
                 PAR += PAR1;
             }
@@ -206,11 +207,27 @@ public class Simulation {
             for(int j = 0; j < n; j++){
                 for(int k = 0; k < n; k++){
                         organism[i][j][k] = new Cell();
-                        organism[i][j][k].status = "healthy";
-                        organism[i][j][k].age = 0.0;
-                        organism[i][j][k].mutation = 0;
-                        organism[i][j][k].mutationNumber = 0.0;
-                        organism[i][j][k].damage = 0;
+                        if(i==0 || j==0 || k==0 || i==(n-1) || j==(n-1) || k==(n-1)
+                         || i==1 || j==1 || k==1 || i==n-2 || j==n-2 || k==n-2){
+                             organism[i][j][k].status = "empty";
+                             organism[i][j][k].age = 0.0;
+                             organism[i][j][k].mutation = 0;
+                             organism[i][j][k].mutationNumber = 0.0;
+                             organism[i][j][k].damage = 0;
+                        }
+                         else {
+                             organism[i][j][k].status = "healthy";
+                             organism[i][j][k].age = 0.0;
+                             organism[i][j][k].mutation = 0;
+                             organism[i][j][k].mutationNumber = 0.0;
+                             organism[i][j][k].damage = 0;
+                         }
+
+                            /*organism[i][j][k].status = "healthy";
+                            organism[i][j][k].age = 0.0;
+                            organism[i][j][k].mutation = 0;
+                            organism[i][j][k].mutationNumber = 0.0;
+                            organism[i][j][k].damage = 0;*/
                 }
             }
         }
@@ -318,8 +335,10 @@ public class Simulation {
                                 random2=rand.nextDouble();
                                 Pdd(i, j, k);
                                 P_RD();
+                                System.out.println(PRD + " " + PDD +" "+ PHit +" "+ random2);
                                 if(random2 <= PRD + PDD){
                                     organism[i][j][k].status = "dead";
+
                                     continue;
                                 }
                                 Pm(i, j, k);
@@ -327,6 +346,8 @@ public class Simulation {
                                     organism[i][j][k].damage();
                                     continue;
                                 }
+                                PAR(i,j,k);
+                                //jak uzyc tu odpowiedzi adaptacyjnej
                                 Pr(i, j, k);
                                 if(random2>= PRD+PD+PM && random2 <= PRD+PD+PM+PR){
                                     if(organism[i][j][k].damage == 1){

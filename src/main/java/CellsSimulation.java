@@ -31,6 +31,7 @@ public class CellsSimulation extends JFrame{
     JCheckBox damagedBox;
     JCheckBox mutatedBox;
     JCheckBox cancerBox;
+    JCheckBox emptyBox;
     JMenu menuL;
     JMenuBar menuBarL;
     JMenuItem itemPL;
@@ -46,7 +47,7 @@ public class CellsSimulation extends JFrame{
     private File logFile;
 
     public CellsSimulation() {
-        Messages.setLocale(new Locale("pl", "PL")); // ustawia PL
+        //Messages.setLocale(new Locale("en", "US")); // ustawia PL
         setTitle(Messages.get("title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1500,1500);
@@ -68,8 +69,7 @@ public class CellsSimulation extends JFrame{
         });
         menuL.add(itemPL);
         menuL.add(itemENl);
-        menuBarL.add(menuL);
-        setJMenuBar(menuBarL);
+       // menuBarL.add(menuL);
 
         //left Panel - cells
         simulation = new Simulation();
@@ -86,11 +86,12 @@ public class CellsSimulation extends JFrame{
         visibleStatuses = new HashSet<>(Set.of("healthy", "dead", "damaged", "mutated", "cancer"));
 
         JPanel checkPanel = new JPanel();
-        healthyBox = new JCheckBox("Healthy", true);
-        deadBox = new JCheckBox("Dead", true);
-        damagedBox = new JCheckBox("Damaged", true);
-        mutatedBox = new JCheckBox("Mutated", true);
-        cancerBox = new JCheckBox("Cancer", true);
+        healthyBox = new JCheckBox(Messages.get("Healthy"), true);
+        deadBox = new JCheckBox(Messages.get("Dead"), true);
+        damagedBox = new JCheckBox(Messages.get("Damaged"), true);
+        mutatedBox = new JCheckBox(Messages.get("Mutated"), true);
+        cancerBox = new JCheckBox(Messages.get("Cancer"), true);
+        emptyBox = new JCheckBox(Messages.get("Empty"), true);
         ItemListener listener = e->{
             visibleStatuses.clear();
             if (healthyBox.isSelected()) visibleStatuses.add("healthy");
@@ -98,6 +99,7 @@ public class CellsSimulation extends JFrame{
             if (damagedBox.isSelected()) visibleStatuses.add("damaged");
             if (mutatedBox.isSelected()) visibleStatuses.add("mutated");
             if (cancerBox.isSelected()) visibleStatuses.add("cancer");
+            if (emptyBox.isSelected()) visibleStatuses.add("empty");
 
             paintPanel.setVisibleStatuses(visibleStatuses);
         };
@@ -106,11 +108,13 @@ public class CellsSimulation extends JFrame{
         damagedBox.addItemListener(listener);
         mutatedBox.addItemListener(listener);
         cancerBox.addItemListener(listener);
+        emptyBox.addItemListener(listener);
         checkPanel.add(healthyBox);
         checkPanel.add(deadBox);
         checkPanel.add(damagedBox);
         checkPanel.add(mutatedBox);
         checkPanel.add(cancerBox);
+        checkPanel.add(emptyBox);
         add(checkPanel, BorderLayout.SOUTH);
 
         //right Panel - parameters
@@ -118,7 +122,7 @@ public class CellsSimulation extends JFrame{
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        JLabel parametersLabel = new JLabel("Parameters : ");
+        JLabel parametersLabel = new JLabel(Messages.get("Parameters"));
         numberOfCells = new JSlider(JSlider.HORIZONTAL, 1, 15, 15);
         numberOfCells.setMajorTickSpacing(5); //glowna podzialka
         numberOfCells.setMinorTickSpacing(1); //najmniejszy odstep
@@ -132,14 +136,14 @@ public class CellsSimulation extends JFrame{
                 paintPanel.updateOrganism(simulation.organism, simulation.n);
             }
         });
-        numberOfCells.setBorder(BorderFactory.createTitledBorder("Number of Cells"));
+        numberOfCells.setBorder(BorderFactory.createTitledBorder(Messages.get("NumberC")));
 
         numberOfStep = new JSlider(JSlider.HORIZONTAL, 0, 50, 10 );
         numberOfStep.setMajorTickSpacing(5);
         numberOfStep.setMinorTickSpacing(1);
         numberOfStep.setPaintTicks(true);
         numberOfStep.setPaintLabels(true);
-        numberOfStep.setBorder(BorderFactory.createTitledBorder("Number of Steps"));
+        numberOfStep.setBorder(BorderFactory.createTitledBorder(Messages.get("NumberS")));
         numberOfStep.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 simulation.setK(numberOfStep.getValue());
@@ -151,7 +155,7 @@ public class CellsSimulation extends JFrame{
         dose.setMinorTickSpacing(1);
         dose.setPaintTicks(true);
         dose.setPaintLabels(true);
-        dose.setBorder(BorderFactory.createTitledBorder("Dose"));
+        dose.setBorder(BorderFactory.createTitledBorder(Messages.get("Dose")));
         dose.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 simulation.setD(dose.getValue());
@@ -164,14 +168,14 @@ public class CellsSimulation extends JFrame{
         parametersPanel.add(numberOfStep);
         parametersPanel.add(dose);
 
-        JLabel saveLabel = new JLabel("Results: ");
-        saveImg = new JButton("Save as image");
+        JLabel saveLabel = new JLabel(Messages.get("Results"));
+        saveImg = new JButton(Messages.get("SaveIMG"));
         saveImg.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 paintPanel.saveIMG();
             }
         });
-        saveText = new JButton("Save as text file");
+        saveText = new JButton(Messages.get("SaveT"));
         saveText.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser chooser = new JFileChooser();
@@ -258,10 +262,11 @@ public class CellsSimulation extends JFrame{
         //Menu - parameter selection
         menuBar = new JMenuBar();
         menu = new JMenu("Menu");
-        parameterSelection = new JMenuItem("Parameter Selection");
+        parameterSelection = new JMenuItem(Messages.get("ParameterS"));
         parameterSelection.addActionListener(e -> openParameterSelection(this));
         menu.add(parameterSelection);
         menuBar.add(menu);
+        menuBar.add(menuL);
         setJMenuBar(menuBar);
 
 
@@ -269,12 +274,14 @@ public class CellsSimulation extends JFrame{
 
     private void changeLanguage(String lang, String country) {
         Locale newLocale = new Locale(lang, country);
-        ResourceBundle.clearCache();
-        ResourceBundle messages = ResourceBundle.getBundle("MessagesBundle", newLocale);
+        Messages.setLocale(newLocale);
+        // ResourceBundle messages = ResourceBundle.getBundle("MessagesBundle", newLocale);
 
-        paintPanel.repaint();
+       // paintPanel.repaint();
         this.dispose();
-        new CellsSimulation().setVisible(true);
+        CellsSimulation newWindow = new CellsSimulation();
+        newWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        newWindow.setVisible(true);
     }
 
 

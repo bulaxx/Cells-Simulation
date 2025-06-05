@@ -14,7 +14,7 @@ public class PaintPanel extends JPanel {
 
     private Cell[][][] organism;
     private int n;
-    private Set<String> visibleStatuses = new HashSet<>(Set.of("healthy", "dead", "damaged", "mutated", "cancer"));
+    private Set<String> visibleStatuses = new HashSet<>(Set.of("healthy", "dead", "damaged", "mutated", "cancer", "empty"));
     public PaintPanel(Cell[][][] organism, int newN) {
         this.organism = organism;
         this.n = newN;
@@ -57,15 +57,23 @@ public class PaintPanel extends JPanel {
                     g2.setStroke(new BasicStroke(2));
                     g2.drawOval(drawX, drawY, pointSize, pointSize);
 
-                    g2.setPaint(gradient);
-                    g2.fillOval(drawX, drawY, pointSize, pointSize);
+                    if (status.equals("empty")) {
+                        g2.setPaint(new Color(200, 200, 200, 100));
+                        g2.fillOval(drawX, drawY, pointSize, pointSize);
+                        g2.setColor(new Color(150, 150, 150));
+                        g2.setStroke(new BasicStroke(1));
+                        g2.drawOval(drawX, drawY, pointSize, pointSize);
+                    } else {
+                        g2.setPaint(gradient);
+                        g2.fillOval(drawX, drawY, pointSize, pointSize);
+                        g2.setColor(new Color(255, 255, 255, 80));
+                        int highlightSize = (int) (pointSize * 0.4);
+                        int highlightX = drawX + pointSize / 4 - 4;
+                        int highlightY = drawY + pointSize / 4 - 4;
+                        g2.fillOval(highlightX, highlightY, highlightSize, highlightSize);
+                    }
 
-                    g2.setColor(new Color(255, 255, 255, 80));
-                    int highlightSize = (int) (pointSize * 0.4);
-                    int highlightX = drawX + pointSize / 4 - 4;
-                    int highlightY = drawY + pointSize / 4 - 4;
-
-                    g2.fillOval(highlightX, highlightY, highlightSize, highlightSize);
+                    //g2.fillOval(highlightX, highlightY, highlightSize, highlightSize);
                 }
             }
         }
@@ -84,7 +92,7 @@ public class PaintPanel extends JPanel {
             case "mutated": return Color.decode("#e7761d");
             case "cancer": return Color.decode("#f03725");
             case "dead": return Color.BLACK;
-            case "empty": return Color.WHITE;
+            case "empty": return new Color(255, 255, 255, 128);
             default: return Color.GRAY;
         }
     }
