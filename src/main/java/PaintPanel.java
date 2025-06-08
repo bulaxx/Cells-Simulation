@@ -129,5 +129,3 @@ public class PaintPanel extends JPanel {
         }
     }
 }
-
-
