@@ -119,6 +119,10 @@ public class Simulation {
     }
 
     //Death as a result of precise irradiation
+    public double getDEFAULT_const_PRD(){return DEFAULT_const_PRD ;}
+    public double get_const_PRD(){return const_PRD;}
+    public void set_const_PRD(double set_PDM){const_PRD = set_PDM;}
+    double DEFAULT_const_PRD =  6*Math.pow(10, -5);
     double const_PRD = 6*Math.pow(10, -5);
     public double P_RD(){
         PRD = 1 - Math.exp(-const_PRD*D);
@@ -126,6 +130,23 @@ public class Simulation {
     }
 
     //formation of spontaneous cell damage
+    public double getDEFAULT_t_PM(){ return DEFAULT_t_PM; }
+    public double getDEFAULT_a_PM(){ return DEFAULT_a_PM; }
+    public double getDEFAULT_n_PM(){ return DEFAULT_n_PM; }
+
+    public double get_t_PM(){return t_PM; }
+    public double get_a_PM(){return a_PM; }
+    public double get_n_PM(){return n_PM; }
+
+    public void setPM(double set_t_PM,double set_a_PM,double set_n_PM){
+        t_PM = set_t_PM;
+        a_PM = set_a_PM;
+        n_PM = set_n_PM;
+    }
+
+    double DEFAULT_t_PM = 0.0004;
+    double DEFAULT_a_PM = Math.pow(10, -8);
+    double DEFAULT_n_PM = 3;
     double t_PM = 0.0004;
     double a_PM = Math.pow(10, -8);
     double n_PM = 3;
@@ -135,13 +156,34 @@ public class Simulation {
     }
 
     //radiation damage
-    double constP_DEM = 0.2;
+    public double getDEFAULT_const_PRDEM(){return DEFAULT_const_PRDEM ;}
+    public double get_const_PRDEM(){return const_PRDEM;}
+    public void set_const_PRDEM(double set_PRDEM){const_PRDEM = set_PRDEM;}
+    double DEFAULT_const_PRDEM =  0.2;
+    double const_PRDEM = 0.2;
     public double PRDEM(){
-        PRDEM = 1 - Math.exp(-constP_DEM*D);
+        PRDEM = 1 - Math.exp(-const_PRDEM*D);
         return PRDEM;
     }
 
     //natural repair of damage
+    public double getDEFAULT_q_PR(){ return DEFAULT_q_PR; }
+    public double getDEFAULT_a_PR(){ return DEFAULT_a_PR; }
+    public double getDEFAULT_n_PR(){ return DEFAULT_n_PR; }
+
+    public double get_q_PR(){return q_PR; }
+    public double get_a_PR(){return a_PR; }
+    public double get_n_PR(){return n_PR; }
+
+    public void setPR(double set_q_PR,double set_a_PR,double set_n_PR){
+        q_PR = set_q_PR;
+        a_PR = set_a_PR;
+        n_PR = set_n_PR;
+    }
+
+    double DEFAULT_q_PR = Math.pow(10, -4);
+    double DEFAULT_a_PR = Math.pow(10, -5);
+    double DEFAULT_n_PR = 4;
     double q_PR = Math.pow(10, -4);
     double a_PR = Math.pow(10, -5);
     double n_PR = 4;
@@ -152,8 +194,8 @@ public class Simulation {
 
     //formation of mutation converting a damaged cell into a mutated cell
     public double getDEFAULT_a_PDM(){return DEFAULT_a_PDM ;}
-    public double get_a_PDM(){return PDM;}
-    public void setPDM(double set_PDM){PDM = set_PDM;}
+    public double get_a_PDM(){return a_PDM;}
+    public void setPDM(double set_PDM){a_PDM = set_PDM;}
     double DEFAULT_a_PDM = 0.002;
     double a_PDM = 0.002; //zamiast 0.002
     public double PDM(int x, int y, int z) {
@@ -169,6 +211,15 @@ public class Simulation {
         return PRC;
     }
 
+    //additional mutation
+    public double getDEFAULT_a_PRMM(){return DEFAULT_a_PRMM ;}
+    public double get_a_PRMM(){return a_PRMM;}
+    public void set_a_PRMM(double set_a_PRMM){a_PRMM = set_a_PRMM;}
+    double DEFAULT_a_PRMM = 0.002;
+    public double getDEFAULT_n_PRMM(){return DEFAULT_n_PRMM ;}
+    public double get_n_PRMM(){return n_PRMM;}
+    public void set_n_PRMM(double set_n_PRMM){n_PRMM = set_n_PRMM;}
+    double DEFAULT_n_PRMM = 2;
     double a_PRMM = 0.002; //zamiast 0.002
     double n_PRMM = 2;
     public double PRMM(int x, int y, int z) {
@@ -176,14 +227,27 @@ public class Simulation {
         return PRMM;
     }
 
-    double beta1 = 0.001;
-    double beta2 = 0.00001;
+    //PCM additional mutation cancer
+    public double getDEFAULT_PCM_beta1(){return DEFAULT_PCM_beta1 ;}
+    public double get_PCM_beta1(){return PCM_beta1;}
+    public void set_PCM_beta1(double set_PCM_beta1){PCM_beta1 = set_PCM_beta1;}
+    double DEFAULT_PCM_beta1 = 0.001;
+    public double getDEFAULT_PCM_beta2(){return DEFAULT_PCM_beta2 ;}
+    public double get_PCM_beta2(){return PCM_beta2;}
+    public void set_PCM_beta2(double set_PCM_beta2){PCM_beta2 = set_PCM_beta2;}
+    double DEFAULT_PCM_beta2 = 0.00001;
+    double PCM_beta1 = 0.001;
+    double PCM_beta2 = 0.00001;
     public double PCM(int x, int y, int z) {
-        PCM = beta1 + organism[x][y][z].age * beta2;
+        PCM = PCM_beta1 + organism[x][y][z].age * PCM_beta2;
         return PCM;
     }
 
     //Cancer cell death due to radio-sensitivity
+    public double getDEFAULT_PCRD(){return DEFAULT_PCRD ;}
+    public double get_PCRD(){return const_PCRD;}
+    public void setPCRD(double set_PCRD){const_PCRD = set_PCRD;}
+    double DEFAULT_PCRD = 6*Math.pow(10, -6);
     double const_PCRD = 6*Math.pow(10, -6);
     public double PCRD() {
         PCRD = 1 - Math.exp(-const_PCRD*D);
