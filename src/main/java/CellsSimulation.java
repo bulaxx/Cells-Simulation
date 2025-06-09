@@ -43,6 +43,7 @@ public class CellsSimulation extends JFrame{
     private int step = 0;
     private Timer timer;
     private File logFile;
+    private JLabel stepLabel;
 
     static JTextField textAHealth;
     static JTextField textTHealth;
@@ -67,6 +68,8 @@ public class CellsSimulation extends JFrame{
     static JTextField textRadiationCancer;
     static JTextField textAddMutationCancerB1;
     static JTextField textAddMutationCancerB2;
+    static JTextField textMutantToCancerA;
+    static JTextField textMutantToCancerN;
 
     static JTextField textSponDamageT;
     static JTextField textSponDamageA;
@@ -76,6 +79,9 @@ public class CellsSimulation extends JFrame{
     static JTextField textNaturalRepairA;
     static JTextField textNaturalRepairN;
     static JTextField textRadiationDamage;
+    static JTextField textAdaptiveA0;
+    static JTextField textAdaptiveA1;
+    static JTextField textAdaptiveA2;
 
 
     public CellsSimulation() {
@@ -85,6 +91,12 @@ public class CellsSimulation extends JFrame{
         setSize(1500,1500);
         setLayout(new BorderLayout());
 
+        stepLabel = new JLabel("Step");
+        stepLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        stepLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        JPanel stepPanel = new JPanel(new BorderLayout());
+        stepPanel.add(stepLabel, BorderLayout.WEST);
+        add(stepPanel, BorderLayout.NORTH);
         menuL = new JMenu(Messages.get("changeLanguage"));
         menuBarL = new JMenuBar();
         itemPL = new JMenuItem(Messages.get("itemPL"));
@@ -270,6 +282,7 @@ public class CellsSimulation extends JFrame{
         timer = new Timer(500, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Timer: " +step);
+                stepLabel.setText("Step: " + step);
                 simulation.setStepTime(step);
                 if(step>= simulation.s){
                     stopSimulation();
@@ -339,8 +352,12 @@ public class CellsSimulation extends JFrame{
     }
 
     private void resetSimulation(){
+        simulation.setD(dose.getValue());
+        simulation.setK(numberOfStep.getValue());
+        simulation.setN(numberOfCells.getValue());
         simulation.inicializeOrganism();
         step = 0;
+        stepLabel.setText("Step: 0");
         paintPanel.updateOrganism(simulation.organism, simulation.n);
     }
 
@@ -381,6 +398,15 @@ public class CellsSimulation extends JFrame{
         }
     }
 
+    private static JScrollPane getOtherScrollPane() {
+        JPanel panel = createOtherPanel();
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        return scrollPane;
+    }
+
+
     private static void openParameterSelection(JFrame parent) {   //passes references to the head window
         JDialog parametersDialog = new JDialog(parent, "Parameter Selection", true);
         parametersDialog.setSize(500, 500);
@@ -391,7 +417,7 @@ public class CellsSimulation extends JFrame{
         tabbedPane.addTab("Damaged Cells", createDamagedPanel());
         tabbedPane.addTab("Mutated Cells", createMutatedPanel());
         tabbedPane.addTab("Cancerous Cells", createCancerPanel());
-        tabbedPane.addTab("Other", createOtherPanel());
+        tabbedPane.addTab("Other", getOtherScrollPane());
 
         JPanel buttonPanel = new JPanel();
         JButton saveButton = new JButton("Save");
@@ -435,6 +461,10 @@ public class CellsSimulation extends JFrame{
                     simulation.set_PCM_beta1(beta1PCM);
                     double beta2PCM = Double.parseDouble(textAddMutationCancerB2.getText());
                     simulation.set_PCM_beta2(beta2PCM);
+                    double aprc = Double.parseDouble(textMutantToCancerA.getText());
+                    simulation.set_a_PRC(aprc);
+                    double nprc = Double.parseDouble(textMutantToCancerN.getText());
+                    simulation.set_n_PRC(nprc);
 
                     double tpm = Double.parseDouble(textSponDamageT.getText());
                     double apm = Double.parseDouble(textSponDamageA.getText());
@@ -449,6 +479,10 @@ public class CellsSimulation extends JFrame{
                     simulation.setPR(qpr, apr, npr);
                     double prdem = Double.parseDouble(textRadiationDamage.getText());
                     simulation.set_const_PRDEM(prdem);
+                    double a0par = Double.parseDouble(textAdaptiveA0.getText());
+                    double a1par = Double.parseDouble(textAdaptiveA1.getText());
+                    double a2par = Double.parseDouble(textAdaptiveA2.getText());
+                    simulation.setPAR(a0par, a1par, a2par);
 
                     //parametersDialog.dispose(); // zamknij okno
                 } catch (NumberFormatException ex) {
@@ -496,6 +530,10 @@ public class CellsSimulation extends JFrame{
                 simulation.set_PCM_beta1(simulation.getDEFAULT_PCM_beta1());
                 textAddMutationCancerB2.setText(String.valueOf(simulation.getDEFAULT_PCM_beta2()));
                 simulation.set_PCM_beta2(simulation.getDEFAULT_PCM_beta2());
+                textMutantToCancerA.setText(String.valueOf(simulation.getDEFAULT_a_PRC()));
+                simulation.set_a_PRC(simulation.getDEFAULT_a_PRC());
+                textMutantToCancerN.setText(String.valueOf(simulation.getDEFAULT_n_PRC()));
+                simulation.set_n_PRC(simulation.getDEFAULT_n_PRC());
 
                 textSponDamageT.setText(String.valueOf(simulation.getDEFAULT_t_PM()));
                 textSponDamageA.setText(String.valueOf(simulation.getDEFAULT_a_PM()));
@@ -509,6 +547,10 @@ public class CellsSimulation extends JFrame{
                 simulation.setPR(simulation.getDEFAULT_q_PR(), simulation.getDEFAULT_a_PR(), simulation.getDEFAULT_n_PR());
                 textRadiationDamage.setText(String.valueOf(simulation.getDEFAULT_const_PRDEM()));
                 simulation.set_const_PRDEM(simulation.getDEFAULT_const_PRDEM());
+                textAdaptiveA0.setText(String.valueOf(simulation.getDEFAULT_a0_PAR()));
+                textAdaptiveA1.setText(String.valueOf(simulation.getDEFAULT_a1_PAR()));
+                textAdaptiveA2.setText(String.valueOf(simulation.getDEFAULT_a2_PAR()));
+                simulation.setPAR(simulation.getDEFAULT_a0_PAR(), simulation.getDEFAULT_a1_PAR(), simulation.getDEFAULT_a2_PAR());
 
             }
         });
@@ -525,15 +567,15 @@ public class CellsSimulation extends JFrame{
         healthPanel.setBorder(BorderFactory.createTitledBorder("Parameters: "));
         healthPanel.setLayout(new BoxLayout(healthPanel, BoxLayout.Y_AXIS));
 
-        JLabel labelT  = new JLabel("t:");
+        JLabel labelT  = new JLabel("t_D:");
         textTHealth = new JTextField(String.valueOf(simulation.get_t_PD()), 5);
         textTHealth.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelA = new JLabel("a:");
+        JLabel labelA = new JLabel("a_D:");
         textAHealth = new JTextField(String.valueOf(simulation.get_a_PD()), 5);
         textAHealth.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelN  = new JLabel("n:");
+        JLabel labelN  = new JLabel("n_D:");
         textNHealth = new JTextField(String.valueOf(simulation.get_n_PD()), 5);
         textNHealth.setPreferredSize(new Dimension(10, 2));
 
@@ -564,20 +606,20 @@ public class CellsSimulation extends JFrame{
         damagedPanel.setBorder(BorderFactory.createTitledBorder("Parameters: "));
         damagedPanel.setLayout(new BoxLayout(damagedPanel, BoxLayout.Y_AXIS));
 
-        JLabel labelT  = new JLabel("t:");
+        JLabel labelT  = new JLabel("t_DD:");
         textTDamaged = new JTextField(String.valueOf(simulation.get_t_PDD()), 5);
         textTDamaged.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelA = new JLabel("a:");
+        JLabel labelA = new JLabel("a_DD:");
         textADamaged = new JTextField(String.valueOf(simulation.get_a_PDD()), 5);
         textADamaged.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelN  = new JLabel("n:");
+        JLabel labelN  = new JLabel("n_DD:");
         textNDamaged = new JTextField(String.valueOf(simulation.get_n_PDD()), 5);
         textNDamaged.setPreferredSize(new Dimension(10, 2));
 
         JPanel panelNaturalDeath = new JPanel(new GridLayout(3,2,5,5));
-        panelNaturalDeath.setBorder(BorderFactory.createTitledBorder("Spontaneous damage"));
+        panelNaturalDeath.setBorder(BorderFactory.createTitledBorder("Natural Cell Death"));
         panelNaturalDeath.add(labelT);
         panelNaturalDeath.add(textTDamaged);
         panelNaturalDeath.add(labelA);
@@ -610,15 +652,15 @@ public class CellsSimulation extends JFrame{
         mutatedPanel.setBorder(BorderFactory.createTitledBorder("Parameters: "));
         mutatedPanel.setLayout(new BoxLayout(mutatedPanel, BoxLayout.Y_AXIS));
 
-        JLabel labelT  = new JLabel("t:");
+        JLabel labelT  = new JLabel("t_MD:");
         textTMutated = new JTextField(String.valueOf(simulation.get_t_PMD()), 5);
         textTMutated.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelA = new JLabel("a:");
+        JLabel labelA = new JLabel("a_MD:");
         textAMutated = new JTextField(String.valueOf(simulation.get_a_PMD()), 5);
         textAMutated.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelN  = new JLabel("n:");
+        JLabel labelN  = new JLabel("n_MD:");
         textNMutated = new JTextField(String.valueOf(simulation.get_n_PMD()), 5);
         textNMutated.setPreferredSize(new Dimension(10, 2));
 
@@ -652,6 +694,19 @@ public class CellsSimulation extends JFrame{
         panelTransA.add(labelTransN);
         panelTransA.add(textAddMutationN);
         mutatedPanel.add(panelTransA);
+
+        JLabel labelMutantA = new JLabel("a_PRC:");
+        textMutantToCancerA = new JTextField(String.valueOf(simulation.get_a_PRC()), 5);
+        JLabel labelMutantN = new JLabel("n_PRC:");
+        textMutantToCancerN = new JTextField(String.valueOf(simulation.get_n_PRC()));
+
+        JPanel panelMutantToCancer = new JPanel(new GridLayout(2,2,5,5));
+        panelMutantToCancer.setBorder(BorderFactory.createTitledBorder("Transformation of a mutant cell into a cancerous one"));
+        panelMutantToCancer.add(labelMutantA);
+        panelMutantToCancer.add(textMutantToCancerA);
+        panelMutantToCancer.add(labelMutantN);
+        panelMutantToCancer.add(textMutantToCancerN);
+        mutatedPanel.add(panelMutantToCancer);
 
         return mutatedPanel;
     }
@@ -706,15 +761,15 @@ public class CellsSimulation extends JFrame{
         otherPanel.setBorder(BorderFactory.createTitledBorder("Parameters: "));
         otherPanel.setLayout(new BoxLayout(otherPanel, BoxLayout.Y_AXIS));
 
-        JLabel labelT2  = new JLabel("t_PM:");
+        JLabel labelT2  = new JLabel("t_M:");
         textSponDamageT = new JTextField(String.valueOf(simulation.get_t_PM()), 5);
         textSponDamageT.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelA2 = new JLabel("a_PM:");
+        JLabel labelA2 = new JLabel("a_M:");
         textSponDamageA = new JTextField(String.valueOf(simulation.get_a_PM()), 5);
         textSponDamageA.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelN2  = new JLabel("n_PM:");
+        JLabel labelN2  = new JLabel("n_M:");
         textSponDamageN = new JTextField(String.valueOf(simulation.get_n_PM()), 5);
         textSponDamageN.setPreferredSize(new Dimension(10, 2));
 
@@ -733,18 +788,18 @@ public class CellsSimulation extends JFrame{
         JPanel panelDivision = new JPanel(new GridLayout(1,2,5,5));
         panelDivision.setBorder(BorderFactory.createTitledBorder("Death as a result of precise irradiation"));
         panelDivision.add(labelDivision);
-        panelDivision.add(textDivisionDamaged);
+        panelDivision.add(textDeadPrecise);
         otherPanel.add(panelDivision);
 
-        JLabel labelT3  = new JLabel("t_PM:");
+        JLabel labelT3  = new JLabel("q_R:");
         textNaturalRepairQ = new JTextField(String.valueOf(simulation.get_q_PR()), 5);
         textNaturalRepairQ.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelA3 = new JLabel("a_PM:");
+        JLabel labelA3 = new JLabel("a_R:");
         textNaturalRepairA = new JTextField(String.valueOf(simulation.get_a_PR()), 5);
         textNaturalRepairA.setPreferredSize(new Dimension(10, 2));
 
-        JLabel labelN3  = new JLabel("n_PM:");
+        JLabel labelN3  = new JLabel("n_R:");
         textNaturalRepairN = new JTextField(String.valueOf(simulation.get_n_PR()), 5);
         textNaturalRepairN.setPreferredSize(new Dimension(10, 2));
 
@@ -765,6 +820,28 @@ public class CellsSimulation extends JFrame{
         panelRadiationDamage.add(labelRadiationDamage);
         panelRadiationDamage.add(textRadiationDamage);
         otherPanel.add(panelRadiationDamage);
+
+        JLabel labelT4  = new JLabel("a0_PAR:");
+        textAdaptiveA0 = new JTextField(String.valueOf(simulation.get_a0_PAR()), 5);
+        textAdaptiveA0.setPreferredSize(new Dimension(10, 2));
+
+        JLabel labelA4 = new JLabel("a1_PAR:");
+        textAdaptiveA1 = new JTextField(String.valueOf(simulation.get_a1_PAR()), 5);
+        textAdaptiveA1.setPreferredSize(new Dimension(10, 2));
+
+        JLabel labelN4  = new JLabel("a2_PAR:");
+        textAdaptiveA2 = new JTextField(String.valueOf(simulation.get_a2_PAR()), 5);
+        textAdaptiveA2.setPreferredSize(new Dimension(10, 2));
+
+        JPanel panelAdaptiveResponse = new JPanel(new GridLayout(3,2,5,5));
+        panelAdaptiveResponse.setBorder(BorderFactory.createTitledBorder("Adaptive response"));
+        panelAdaptiveResponse.add(labelT4);
+        panelAdaptiveResponse.add(textAdaptiveA0);
+        panelAdaptiveResponse.add(labelA4);
+        panelAdaptiveResponse.add(textAdaptiveA1);
+        panelAdaptiveResponse.add(labelN4);
+        panelAdaptiveResponse.add(textAdaptiveA2);
+        otherPanel.add(panelAdaptiveResponse);
 
         return otherPanel;
     }

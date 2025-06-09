@@ -2,7 +2,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.Math;
 import java.sql.SQLOutput;
-import java.util.Random;
+import java.util.*;
 
 public class Simulation {
 
@@ -204,6 +204,14 @@ public class Simulation {
     }
 
     //transformation of a mutant cell into a cancerous one
+    public double getDEFAULT_a_PRC(){return DEFAULT_a_PRC ;}
+    public double get_a_PRC(){return a_PRC;}
+    public void set_a_PRC(double set_a_PRC){a_PRC = set_a_PRC;}
+    double DEFAULT_a_PRC = 0.002;
+    public double getDEFAULT_n_PRC(){return DEFAULT_n_PRC ;}
+    public double get_n_PRC(){return n_PRC;}
+    public void set_n_PRC(double set_n_PRC){n_PRC = set_n_PRC;}
+    double DEFAULT_n_PRC = 5;
     double a_PRC = 0.002; //zamiast 0.002
     double n_PRC = 5;
     public double Prc(int x, int y, int z) {
@@ -255,6 +263,23 @@ public class Simulation {
     }
 
     //adaptive response
+    public double getDEFAULT_a0_PAR(){ return DEFAULT_a0_PAR; }
+    public double getDEFAULT_a1_PAR(){ return DEFAULT_a1_PAR; }
+    public double getDEFAULT_a2_PAR(){ return DEFAULT_a2_PAR; }
+
+    public double get_a0_PAR(){return a0_PAR; }
+    public double get_a1_PAR(){return a1_PAR; }
+    public double get_a2_PAR(){return a2_PAR; }
+
+    public void setPAR(double set_a0_PAR,double set_a1_PAR,double set_a2_PAR){
+        a0_PAR = set_a0_PAR;
+        a1_PAR = set_a1_PAR;
+        a2_PAR = set_a2_PAR;
+    }
+
+    double DEFAULT_a0_PAR = 22.94;
+    double DEFAULT_a1_PAR = 79.45;
+    double DEFAULT_a2_PAR = 0.0832;
     double a0_PAR = 22.94;
     double a1_PAR = 79.45;
     double a2_PAR = 0.0832;
@@ -314,194 +339,45 @@ public class Simulation {
     double DEFAULT_PCD = 0.002;
     double PCD = 0.002;
 
-    public Cell[][][] reproduction(int x , int y, int z) {
 
-        int random = rand.nextInt(26);
 
-        int i = 0;
-        int j = 0;
-        int k = 0;
-        switch(random) {
-            case 0: {
-                i = x-1;
-                j = y-1;
-                k = z-1;
-                break;
-            }
-            case 1: {
-                i = x;
-                j = y-1;
-                k = z-1;
-                break;
-            }
-            case 2: {
-                i = x+1;
-                j = y-1;
-                k = z-1;
-                break;
-            }
-            case 3: {
-                i = x-1;
-                j = y;
-                k = z-1;
-                break;
-            }
-            case 4: {
-                i = x;
-                j = y;
-                k = z-1;
-                break;
-            }
-            case 5: {
-                i = x+1;
-                j = y;
-                k = z-1;
-                break;
-            }
-            case 6: {
-                i = x-1;
-                j = y+1;
-                k = z-1;
-                break;
-            }
-            case 7: {
-                i = x;
-                j = y+1;
-                k = z-1;
-                break;
-            }
-            case 8: {
-                i = x+1;
-                j = y+1;
-                k = z-1;
-                break;
-            }
-            case 9: {
-                i = x-1;
-                j = y-1;
-                k=z;
-                break;
-            }
-            case 10: {
-                i = x;
-                j = y-1;
-                k = z;
-                break;
-            }
-            case 11: {
-                i = x+1;
-                j = y-1;
-                k = z;
-                break;
-            }
-            case 12: {
-                i = x-1;
-                j = y;
-                k = z;
-                break;
-            }
-            case 13: {
-                i = x+1;
-                j = y;
-                k = z;
-                break;
-            }
-            case 14: {
-                i = x-1;
-                j = y+1;
-                k = z;
-                break;
-            }
-            case 15: {
-                i = x;
-                j = y+1;
-                k = z;
-                break;
-            }
-            case 16: {
-                i = x+1;
-                j = y+1;
-                k = z;
-                break;
-            }
-            case 17: {
-                i = x-1;
-                j = y-1;
-                k = z+1;
-                break;
-            }
-            case 18: {
-                i = x;
-                j = y-1;
-                k = z+1;
-                break;
-            }
-            case 19: {
-                i = x+1;
-                j = y-1;
-                k = z+1;
-                break;
-            }
-            case 20: {
-                i = x-1;
-                j = y;
-                k = z+1;
-                break;
-            }
-            case 21: {
-                i = x;
-                j = y;
-                k = z+1;
-                break;
-            }
-            case 22: {
-                i = x+1;
-                j = y;
-                k = z+1;
-                break;
-            }
-            case 23: {
-                i = x-1;
-                j = y+1;
-                k = z+1;
-                break;
-            }
-            case 24: {
-                i = x;
-                j = y+1;
-                k = z+1;
-                break;
-            }
-            case 25: {
-                i = x+1;
-                j = y+1;
-                k = z+1;
-                break;
-            }
 
-        }
-        System.out.println("x = " + x + ", y = " + y + ", z = " + z);
-        System.out.println("i = " + i + ", j = " + j + ", k = " + k);
-        if ("empty".equals(organism[i][j][k].status) || "dead".equals(organism[i][j][k].status)) {
-            String parentStatus = organism[x][y][z].status;
+    public Cell[][][] reproduction(int x, int y, int z) {
+        int[][] offsets = {
+                {-1,-1,-1}, {0,-1,-1}, {1,-1,-1},
+                {-1, 0,-1}, {0, 0,-1}, {1, 0,-1},
+                {-1, 1,-1}, {0, 1,-1}, {1, 1,-1},
+                {-1,-1, 0}, {0,-1, 0}, {1,-1, 0},
+                {-1, 0, 0}, {1, 0, 0},
+                {-1, 1, 0}, {0, 1, 0}, {1, 1, 0},
+                {-1,-1, 1}, {0,-1, 1}, {1,-1, 1},
+                {-1, 0, 1}, {0, 0, 1}, {1, 0, 1},
+                {-1, 1, 1}, {0, 1, 1}, {1, 1, 1}
+        };
 
-            if ("healthy".equals(parentStatus)) {
-                organism[i][j][k].status = "healthy";
-                i = j = k = n;
-            } else if ("damaged".equals(parentStatus)) {
-                organism[i][j][k].status = "damaged";
-                i = j = k = n;
-            } else if ("mutated".equals(parentStatus)) {
-                organism[i][j][k].status = "mutated";
-                i = j = k = n;
-            } else if ("cancer".equals(parentStatus)) {
-                organism[i][j][k].status = "cancer";
-                i = j = k = n;
+        List<int[]> shuffled = new ArrayList<>(Arrays.asList(offsets));
+        Collections.shuffle(shuffled);
 
+        for (int[] offset : shuffled) {
+            int i = x + offset[0];
+            int j = y + offset[1];
+            int k = z + offset[2];
+
+            if (i < 0 || j < 0 || k < 0 || i >= n || j >= n || k >= n)
+                continue;
+
+            if ("empty".equals(organism[i][j][k].status) || "dead".equals(organism[i][j][k].status)) {
+                organism[i][j][k].status = organism[x][y][z].status;
+                organism[i][j][k].age = 0.0;
+                organism[i][j][k].mutation = organism[x][y][z].mutation;
+                organism[i][j][k].mutationNumber = organism[x][y][z].mutationNumber;
+                organism[i][j][k].damage = organism[x][y][z].damage;
+                break;
             }
         }
         return organism;
     }
+
 
 
     public Cell[][][] inicializeOrganism(){
@@ -673,7 +549,13 @@ public class Simulation {
                                     }
 
                                 }
-                                if(random2 >= PRD + PD+PM+PR && random2 <= PRD+PD+PM+PR+PDS){
+                                Prc(i, j, k);
+                                if(random2 >= PRD + PD+PM+PR && random2 <= PRD+PD+PM+PR+PRC){
+                                    organism[i][j][k].status = "cancer";
+                                    continue;
+                                }
+
+                                if(random2 >= PRD + PD+PM+PR+ PRC && random2 <= PRD+PD+PM+PR+PRC+PDS){
                                     reproduction(i,j,k);
                                     continue;
                                 }
